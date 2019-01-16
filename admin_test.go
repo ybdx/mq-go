@@ -35,12 +35,11 @@ func ack(delivery amqp.Delivery) {
 	//data := &body{}
 	body := struct {
 		Body    AdminMsg `json:"body"`
-		Headers Headers  `json:"headers"`
+		Headers Headers  `json:"header"`
 	}{}
 	json.Unmarshal(delivery.Body, &body)
 	fmt.Printf("%+v\n", body)
 	delivery.Ack(false)
-	time.Sleep(time.Second * 10)
 }
 
 func TestNew(t *testing.T) {

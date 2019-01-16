@@ -3,4 +3,4 @@ import:
 - package: github.com/streadway/amqp
   version: a314942b2fd9dde7a3f70ba3f1062848ce6eb392
 - package: github.com/satori/go.uuid
-  version: 1.1.0
+  version: v1.2.0

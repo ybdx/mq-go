@@ -67,7 +67,7 @@ func (q *Queue) Publish(msg interface{}, opt ...Option) error {
 	}
 
 	if _, ok := header[headerId]; !ok {
-		v, _ := uuid.NewV4()
+		v := uuid.NewV4()
 		header[headerId] = v.String()
 	}
 
@@ -91,7 +91,7 @@ func (q *Queue) Publish(msg interface{}, opt ...Option) error {
 	}
 	bodyByte, err := json.Marshal(body)
 	if err != nil {
-		logrus.Errorf("publish %+v to channel %s failed , error is %+v\n", body, q.name, err)
+		logrus.Errorf("publish %+v to channel %s failed , error is %+v", body, q.name, err)
 		return err
 	}
 	publishing := amqp.Publishing{
@@ -194,35 +194,35 @@ func (q *Queue) newSession(typ int) error {
 		// reconnect if failed
 		if failed {
 			time.Sleep(time.Second)
-			logrus.Errorf("[%s] new channel failed, retry\n", sessionName)
+			logrus.Errorf("[%s] new channel failed, retry", sessionName)
 			_ = q.newSession(typ)
 		}
 	}()
 
 	conn, err := amqp.Dial(url)
 	if err != nil {
-		logrus.Errorf("[%s] connect to queue %s url %s failed\n", sessionName, q.name, url)
+		logrus.Errorf("[%s] connect to queue %s url %s failed", sessionName, q.name, url)
 		closeCh = true
 		return err
 	}
 
 	ch, err = conn.Channel()
 	if err != nil {
-		logrus.Errorf("[%s] open queue %s url %s failed %+v\n", sessionName, q.name, url, err)
+		logrus.Errorf("[%s] open queue %s url %s failed %+v", sessionName, q.name, url, err)
 		closeConn = true
 		return err
 	}
 
 	err = ch.ExchangeDeclare(q.name, amqp.ExchangeDirect, true, false, false, false, nil)
 	if err != nil {
-		logrus.Errorf("[%s] exchange declare queue %s exchange %s failed %+v\n", sessionName, q.name, q.conf.Exchange, err)
+		logrus.Errorf("[%s] exchange declare queue %s exchange %s failed %+v", sessionName, q.name, q.conf.Exchange, err)
 		return err
 	}
 
 	if typ == publishSessionType {
 		if err := ch.Confirm(false); err != nil {
 			closeCh, closeConn = true, true
-			logrus.Errorf("[%s] change channel queue %s confirm mode failed %+v\n", sessionName, q.name, err)
+			logrus.Errorf("[%s] change channel queue %s confirm mode failed %+v", sessionName, q.name, err)
 			return err
 		}
 	} else { // the consume need to bind queue
@@ -230,18 +230,18 @@ func (q *Queue) newSession(typ int) error {
 		// the message need to manual ack
 		if _, err := ch.QueueDeclare(q.name, true, false, false, false, nil); err != nil {
 			closeCh, closeConn = true, true
-			logrus.Errorf("[%s] queue declare %s failed %+v\n", sessionName, q.conf.Queue, err)
+			logrus.Errorf("[%s] queue declare %s failed %+v", sessionName, q.conf.Queue, err)
 			return err
 		}
 		if err := ch.QueueBind(q.name, q.conf.Key, q.conf.Exchange, false, nil); err != nil {
 			closeCh, closeConn = true, true
-			logrus.Errorf("[%s] bind queue %s key %s exchange %s failed %+v\n", sessionName, q.conf.Queue, q.conf.Key, q.conf.Exchange, err)
+			logrus.Errorf("[%s] bind queue %s key %s exchange %s failed %+v", sessionName, q.conf.Queue, q.conf.Key, q.conf.Exchange, err)
 			return err
 		}
 		// set qos, prefetch is the max value that consume can no ack
 		if err := ch.Qos(q.conf.PrefetchCount, 0, false); err != nil {
 			closeCh, closeConn = true, true
-			logrus.Errorf("[%s] set %s channel qos failed %s\n", sessionName, q.name, err)
+			logrus.Errorf("[%s] set %s channel qos failed %s", sessionName, q.name, err)
 			return err
 		}
 	}
@@ -253,11 +253,11 @@ func (q *Queue) newSession(typ int) error {
 	// listening channel close
 	go func() {
 		err := <-notifyChan
-		logrus.Errorf("[%s] channel %s is closed, err %+v\n", sessionName, q.name, err)
+		logrus.Errorf("[%s] channel %s is closed, err %+v", sessionName, q.name, err)
 		_ = q.newSession(typ)
 	}()
 
-	logrus.Infof("[%s] create channel %s success\n", sessionName, q.name)
+	logrus.Infof("[%s] create channel %s success", sessionName, q.name)
 	q.Lock()
 	if typ == publishSessionType {
 		q.publishConn = conn
@@ -300,7 +300,7 @@ func init() {
 func initQueue(name string) *Queue {
 	c, ok := conf.Mq[name]
 	if !ok {
-		logrus.Panicf("queue %s not exist \n", name)
+		logrus.Panicf("queue %s not exist", name)
 	}
 	return New(name, c)
 }
